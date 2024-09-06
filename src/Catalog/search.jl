@@ -37,17 +37,7 @@ julia> glassnames(GlassCat.CARGILLE)
  "OG081160"
 ```
 """
-function glassnames(catalog::Module)
-    glass_names = names(catalog, all = true, imported = false)
-    glasses = []
-    for glass_name in glass_names
-        glass_name_str = string(glass_name)
-        if !occursin("#", glass_name_str) && glass_name_str != "eval" && glass_name_str != "include" && glass_name != nameof(catalog)
-            push!(glasses, glass_name)
-        end
-    end
-    return glasses
-end
+glassnames(catalog::Module) = catalog._catalog.glass_name .|> String
 
 """
     glassnames()
@@ -66,7 +56,7 @@ julia> glassnames()
    OpticSim.GlassCat.SUMITA => ["BAF1", "BAF10"  …  "ZNSF8"]
 ```
 """
-glassnames() = [m => glassnames(m) for m in _child_modules(GlassCat)]
+glassnames() = [m => glassnames(m) for m in _child_modules(@__MODULE__)]
 
 """
     findglass(condition::Function) -> Vector{Glass}
@@ -95,11 +85,11 @@ function findglass(condition::Function)
             push!(out, g)
         end
     end
-    for g in OTHER_GLASSES
-        if condition(g)
-            push!(out, g)
-        end
-    end
+    # for g in OTHER_GLASSES
+    #     if condition(g)
+    #         push!(out, g)
+    #     end
+    # end
     return out
 end
 

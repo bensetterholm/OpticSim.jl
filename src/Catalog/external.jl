@@ -2,11 +2,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE in the project root for full license information.
 
-import HTTP
-import SHA
-import ZipFile
-using Pkg
-
 function match_agf_basename(s::AbstractString)
     m = match(r"^([a-zA-Z]+)\.(agf|AGF)$", basename(s))
     return m === nothing ? nothing : m[1]
@@ -17,21 +12,18 @@ is_alphabetical(s::AbstractString) = match(r"^([a-zA-Z]+)$", s) !== nothing
 is_duplicate(name::AbstractString, sourcefile::AbstractString) = name ∈ first.(split.(readlines(sourcefile)))
 
 """
-    add_agf(agffile; agfdir = AGF_DIR, sourcefile = SOURCES_PATH, name = nothing, rebuild = true)
+    add_agf(agffile; agfdir = AGF_DIR, sourcefile = SOURCES_PATH, name = nothing)
 
 Copies a file at `agffile` (this can be either a download link or local path) to `agfdir` and appends a corresponding
 entry to the source list at `sourcefile`.
 
 If a `name` is not provided for the catalog, an implicit name is derived from `agffile`.
-
-If `rebuild` is true, Pkg.build is called at the end to install the new catalog.
 """
 function add_agf(
     agffile::AbstractString;
     agfdir::AbstractString = AGF_DIR,
     sourcefile::AbstractString = SOURCES_PATH,
     name::Union{Nothing, AbstractString} = nothing,
-    rebuild::Bool = true
 )
     # check name
     if name === nothing
@@ -72,12 +64,6 @@ function add_agf(
     open(sourcefile, "a") do io
         source = isfile(agffile) ? [name, sha256sum] : [name, sha256sum, agffile]
         write(io, join(source, ' ') * '\n')
-    end
-
-    # optional rebuild
-    if rebuild
-        @info "Re-building OpticSim.jl"
-        Pkg.build("OpticSim"; verbose=true)
     end
 end
 
@@ -157,4 +143,21 @@ function download_source(dest::AbstractString, url::AbstractString, POST_data::U
     catch e
         @error e
     end
+end
+
+function build!(
+    source_txt=SOURCES_PATH,
+    dest_dir=AGF_DIR;
+    source_txt_backup=nothing
+)
+    if !isfile(source_txt)
+        if isnothing(source_txt_backup)
+            @error "build failed"
+            return
+        else
+            cp(source_txt_backup, source_txt)
+        end
+    end
+    sources = split.(readlines(source_txt))
+    verify_sources!(sources, dest_dir)
 end

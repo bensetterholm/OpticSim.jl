@@ -26,8 +26,11 @@ import Makie
 include("constants.jl")
 include("utilities.jl")
 
-include("GlassCat/GlassCat.jl")
-import .GlassCat: plot_indices, index, polyfit_indices, absairindex, absorption, info, glassid, glassname, glassforid, isair, findglass, modelglass, glassfromMIL, GlassID
+include("Materials/Materials.jl")
+include("Catalog/Catalog.jl")
+# import .Catalog: plot_indices, polyfit_indices #TODO
+import .Catalog: index, absairindex, absorption, info, glassid, glassname, glassforid, isair, findglass, modelglass, glassfromMIL, GlassID
+const GlassCat = Catalog
 
 include("Data/Data.jl")
 include("Geometry/Geometry.jl")
